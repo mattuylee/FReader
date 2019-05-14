@@ -1,0 +1,24 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-title>发现</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+</ion-content>
+
+<!--模拟tab-->
+<ion-tab-bar slot="bottom">
+  <ion-tab-button class="tab-button" (click)="goBack()">
+    <ion-icon name="book"></ion-icon>
+    <ion-label>{{strings.tab.sheet}}</ion-label>
+  </ion-tab-button>
+  <ion-tab-button class="tab-button-selected">
+    <ion-icon name="search"></ion-icon>
+    <ion-label>{{strings.tab.explore}}</ion-label>
+  </ion-tab-button>
+  <ion-tab-button class="tab-button" (click)="gotoSettingPage()">
+    <ion-icon name="settings"></ion-icon>
+    <ion-label>{{strings.tab.setting}}</ion-label>
+  </ion-tab-button>
+</ion-tab-bar>

@@ -1,0 +1,43 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-item class="header-item" class="header-item" lines="none" color="dark">
+      <ion-icon (click)="goBack()" name="arrow-back" color="light" size="large" mode="ios"></ion-icon>
+      <ion-title>{{book ? book.name : ''}}</ion-title>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+<ion-content class="content">
+  <ion-card class="book-info-wrap" color="light" *ngIf="book">
+    <ion-item lines="none">
+      <img class="book-cover" src="{{book.cover}}" />
+      <ion-label *ngIf="book" padding>
+        <p class="book-title">{{book.name}}</p>
+        <p>{{book.author}}</p>
+        <p>{{book.category}}</p>
+        <p>{{book.words}} · {{book.status}}</p>
+      </ion-label>
+    </ion-item>
+  </ion-card>
+
+  <div class="book-intro" *ngIf="book" [class.book-intro-wraped]="isIntroWraped" (click)="showMoreIntro()">
+    <p class="book-intro-content" *ngFor="let line of book.intro">{{line}}</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <ion-item class="book-catalog" (click)="goToCatalogPage()" lines="inset">
+    <ion-label>目录</ion-label>
+    <ion-label class="info" color="medium">
+      共{{book ? book.chapterCount : ''}}章 · {{book ? book.latestChapter : ''}}
+    </ion-label>
+    <ion-icon name="arrow-forward" mode="ios" position="end"></ion-icon>
+  </ion-item>
+  <div class="item-buttons">
+    <ion-button class="item-button-add-sheet" color="{{shelf.canAddToShelf ? 'primary' : 'medium'}}" (click)="addToShelf()">
+      {{shelf.canAddToShelf ? '加入书架' : '&#10004;已在书架'}}
+    </ion-button>
+    <ion-button class="item-button-read-now" color="danger" (click)="readNow()">
+      立即阅读
+    </ion-button>
+  </div>
+</ion-content>

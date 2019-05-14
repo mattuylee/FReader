@@ -1,0 +1,60 @@
+/*封面*/
+.book-cover-img {
+    border: 1px solid WhiteSmoke;
+	width: 54px;
+	height: 72px;
+}
+/*书籍信息块*/
+.book-content {
+    margin: 12px 0 12px 0;
+    padding-left: 1em;
+    padding-right: 10px;
+}
+/*书籍标题*/
+.book-title {
+    font-size: 17px;
+}
+/*书籍状态信息*/
+.book-info {
+    color: #989aa2;
+    font-size: 14px;
+    line-height: 20px;
+}
+/*“更多”图标*/
+.book-more {
+    color: darkgrey;
+}
+
+/*分组封面*/
+.group-covers {
+    border: 1px solid WhiteSmoke;
+    width: 54px;
+    height: 72px;
+}
+.group-cover-top {
+    border: 1px solid WhiteSmoke;
+    width: 24px;
+    height: 34px;
+    padding: 0;
+    margin: 1px;
+    display: inline-block;
+}
+.group-cover-bottom {
+    border: 1px solid WhiteSmoke;
+    width: 24px;
+    height: 34px;
+    margin: 1px;
+    margin-top: -4px;
+    padding: 0;
+    display: inline-block;
+}
+
+//底部导航按钮样式
+.tab-button {
+    --color: #989aa2;
+    --color-selected: #989aa2;
+}
+.tab-button-selected {
+    --color: #200000;
+    --color-selected: #200000;
+}

@@ -1,0 +1,17 @@
+<ion-content>
+  <ion-item class="search-wrap">
+    <ion-icon class="search-icon" (click)="submit()" name="search" position="start"></ion-icon>
+    <ion-input type="search" [(ngModel)]="form.keyword" (keyup)="keyupSubmit($event)" autofocus="autofocus" placeholder="搜你想搜的内容"></ion-input>
+    <ion-button class="search-back-button" fill="outlet" size="default" position="end" (click)="goBack($event)">取消</ion-button>
+  </ion-item>
+  <ion-list lines="inset">
+    <ion-item class="book-item" *ngFor="let book of resultBookList" (click)="goToDetailPage(book.bid)">
+      <ion-img class="book-cover-img" src="{{book ? book.cover : ''}}"></ion-img>
+      <ion-label class="book-content" *ngIf="book">
+        <h2 class="book-title">{{book.name}}</h2>
+        <h3 class="book-info">{{book.author}} · {{book.category}} · {{book.status}} · {{book.words}}</h3>
+        <p class="book-intro">{{book.intro}}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

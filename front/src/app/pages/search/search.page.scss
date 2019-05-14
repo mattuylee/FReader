@@ -1,0 +1,42 @@
+/*搜索框*/
+.search-wrap {
+    margin-top: 8px;
+}
+.search-icon {
+    margin-right: 10px;
+}
+/*返回按钮*/
+.search-back-button {
+    width: 2em;
+    margin-right: 1em;
+}
+
+/*封面*/
+.book-cover-img {
+    width: 66px;
+    height: 88px;
+}
+/*书籍信息块*/
+.book-content {
+    margin: 12px 0 12px 0;
+    padding-left: 1em;
+    padding-right: 10px;
+}
+/*书籍标题*/
+.book-title {
+    font-size: 17px;
+}
+/*书籍状态信息*/
+.book-info {
+    color: #989aa2;
+    font-size: 14px;
+    line-height: 20px;
+}
+/*书籍介绍*/
+.book-intro {
+    color: black;
+    font-size: 14px;
+    line-height: 18px;
+    height: 36px;
+    white-space: normal;
+}

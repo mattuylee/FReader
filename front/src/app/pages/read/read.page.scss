@@ -1,0 +1,76 @@
+/*阅读内容*/
+.read-content-title {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/*滑动器*/
+.slides {
+    width: 120%;
+    height: 100%;
+}
+.read-content-container {
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+}
+.read-content-para {
+    text-align: left;
+    margin: 1em auto;
+}
+
+/*顶部占位栏*/
+.read-top-bar {
+    height: 10px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+/*呼出菜单*/
+.read-header {
+    font-size: 18px;
+    position: fixed;
+    line-height: 40px;
+    height: 40px;
+    width: 100%;
+}
+.add-to-shelf-button {
+    border-radius: 15px 0 0 15px;
+    background: black;
+    color: ghostwhite;
+    position: absolute;
+    line-height: 32px;
+    height: 32px;
+    width: 96px;
+    top: 27%;
+    right: 0;
+    padding-right: 14px;
+    text-align: right;
+}
+.read-footer-button {
+    font-size: 20px;
+}
+/*背景色选择块*/
+.background-block {
+    margin-left: 10px;
+    width: 28px;
+    height: 28px;
+}
+.read-footer-number {
+    font-size: 22px;
+    text-align: center;
+}
+
+/*章节切换提示*/
+.chapter-switch-tip {
+    background-color: rgba(#606060, 0.75);
+    font-size: 30px;
+    padding: 20px;
+    line-height: 50px;
+    position: fixed;
+    text-align: center;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+}

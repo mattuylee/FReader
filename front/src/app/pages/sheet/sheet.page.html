@@ -1,0 +1,72 @@
+<ion-nav></ion-nav>
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-item class="header-item" color="dark">
+      <ion-title>书架</ion-title>
+      <a routerLink="/search">
+        <ion-icon color="light" name="search" size="large" mode="md" position="end"></ion-icon>
+      </a>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!--下拉刷新-->
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)" pullMin="100" pullMax="300" closeDuration="800ms">
+    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="下拉刷新" refreshingSpinner="circles"
+      refreshingText="正在刷新...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <!--书籍-->
+  <ion-list lines="inset">
+    <ion-item class="book-item" *ngFor="let book of books; let i = index" (click)="goToReadPage(book.shelfBook)">
+      <ion-img class="book-cover-img" [src]="book.entityBook ? book.entityBook.cover : strings.uri.defaultCover"></ion-img>
+      <ion-label class="book-content" *ngIf="book.entityBook && book.shelfBook">
+        <h2 class="book-title">{{book.entityBook.name}}</h2>
+        <p class="book-info">
+          {{book.entityBook.author}} · {{(book.shelfBook.readWords / book.entityBook.wordCount * 100).toFixed(2)}}%
+        </p>
+        <p class="book-info">{{book.entityBook.status}} · {{book.entityBook.latestChapter}}</p>
+      </ion-label>
+      <ion-button fill="clear" color="dark" (click)="actBookSheet(book);$event.stopPropagation()">
+        <ion-icon class="book-more" name="more" mode="ios" size="large"></ion-icon>
+      </ion-button>
+    </ion-item>
+    <!--分组-->
+    <ion-item class="book-item" *ngFor="let group of groups; let i = index" (click)="goToGroupPage(group.gid)">  <div class="group-covers">
+        <ion-img class="group-cover-top" [src]="group.covers.length>0 ? group.covers[0] : strings.uri.defaultGroupCover">
+        </ion-img>
+        <ion-img class="group-cover-top" [src]="group.covers.length>1 ? group.covers[1] : strings.uri.defaultGroupCover">
+        </ion-img>
+        <ion-img class="group-cover-bottom" [src]="group.covers.length>2 ? group.covers[2] : strings.uri.defaultGroupCover">
+        </ion-img>
+        <ion-img class="group-cover-bottom" [src]="group.covers.length>3 ? group.covers[3] : strings.uri.defaultGroupCover">
+        </ion-img>
+      </div>
+      <ion-label class="book-content">
+        <h2 class="book-title">{{group.title}}</h2>
+        <p class="book-info">{{group.size}}本</p>
+        <!--占位，暂无内容-->
+        <p class="book-info">&nbsp;</p>
+      </ion-label>
+      <ion-button fill="clear" color="dark" (click)="actGroupSheet(group);$event.stopPropagation()">
+        <ion-icon class="book-more" name="more" mode="ios" size="large"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
+<ion-tab-bar slot="bottom">
+  <ion-tab-button class="tab-button-selected">
+    <ion-icon name="book"></ion-icon>
+    <ion-label>{{strings.tab.sheet}}</ion-label>
+  </ion-tab-button>
+  <ion-tab-button class="tab-button" (click)="gotoExplorePage()">
+    <ion-icon name="search"></ion-icon>
+    <ion-label>{{strings.tab.explore}}</ion-label>
+  </ion-tab-button>
+  <ion-tab-button class="tab-button" (click)="gotoSettingPage()">
+    <ion-icon name="settings"></ion-icon>
+    <ion-label>{{strings.tab.setting}}</ion-label>
+  </ion-tab-button>
+</ion-tab-bar>

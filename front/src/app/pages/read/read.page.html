@@ -1,0 +1,91 @@
+<!--ion-content必须放在最前面，因为代码里面使用了这个顺序-->
+<ion-content scrollEvents="true" (click)="onTap()" (touchend)="onTouchEnd($event)" (touchstart)="onTouchStart($event)"
+    (touchmove)="onTouchMove($event)" (ionScroll)="onScroll($event)">
+    <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)" pullMin="100" pullMax="300" closeDuration="800ms">
+    </ion-refresher>
+    <div padding *ngIf="!config.slideMode && chapter != null" [ngStyle]="style.bodyCss">
+        <p class="read-content-title">{{chapter.title}}</p>
+        <p *ngFor="let line of chapter.contentLines" class="read-content-para">{{line}}</p>
+    </div>
+
+    <div class="read-content-container" [ngStyle]="{...style.bodyCss, ...slide.frontStyle}">
+        <p class="read-content-para" *ngFor="let line of slide.backPage.lines">{{line}}</p>
+    </div>
+    <div class="read-content-container" [ngStyle]="{...style.bodyCss, ...slide.backStyle}">
+        <p class="read-content-para" *ngFor="let line of slide.frontPage.lines">{{line}}</p>
+    </div>
+</ion-content>
+
+
+<!--绝对定位元素-->
+
+<!--顶部占位栏-->
+<div class="read-top-bar" *ngIf="config.slideMode" [ngStyle]="style.colorCss"></div>
+
+<!--呼出菜单-->
+<ion-item *ngIf="menu.show" class="read-header" color="dark" lines="none">
+    <ion-icon name="arrow-back" (click)="goBack()" color="light" mode="ios"></ion-icon>
+    <p>&emsp;{{chapter ? chapter.title : ''}}</p>
+</ion-item>
+<div *ngIf="menu.show && !shelfControl.onShelf" class="add-to-shelf-button" (click)="addToShelf()">
+    加入书架
+</div>
+<ion-footer *ngIf="menu.show">
+    <!--章节切换按钮-->
+    <ion-item color="dark" lines="full">
+        <ion-button class="read-footer-button" (click)="lastChapter(false)" size="small" color="light" fill="clear"
+            slot="start">上一章</ion-button>
+        <ion-button class="read-footer-button" (click)="nextChapter()" size="small" color="light" fill="clear"
+            slot="end">下一章</ion-button>
+    </ion-item>
+    <!--背景样式-->
+    <ion-item color="dark" lines="none">
+        <ion-avatar class="background-block" (click)="setColor('#DBDBDB')">
+            <img src="{{strings.uri.background.light}}" />
+        </ion-avatar>
+        <ion-avatar class="background-block" (click)="setColor('#ECF8D6')">
+            <img src="{{strings.uri.background.greenEye}}" />
+        </ion-avatar>
+        <ion-avatar class="background-block" (click)="setColor('#FAF0E6')">
+            <img src="{{strings.uri.background.linen}}" />
+        </ion-avatar>
+        <ion-avatar class="background-block" (click)="setColor('#F5F5DC')">
+            <img src="{{strings.uri.background.beige}}" />
+        </ion-avatar>
+        <ion-avatar class="background-block" (click)="setColor('#F8F8FF')">
+            <img src="{{strings.uri.background.ghostWhite}}" />
+        </ion-avatar>
+        <ion-avatar class="background-block" (click)="setColor('#EEE8AA')">
+            <img src="{{strings.uri.background.paleGodenrod}}" />
+        </ion-avatar>
+    </ion-item>
+    <!--字体调整-->
+    <ion-item color="dark" lines="none">
+        <ion-button class="read-footer-button" (click)="changeFontSize(-1)" size="small" color="light" fill="clear"
+            slot="start">A-</ion-button>
+        <ion-label class="read-footer-number">{{config.fontSize}}</ion-label>
+        <ion-button class="read-footer-button" (click)="changeFontSize(1)" size="small" color="light" fill="clear"
+            slot="end">A+</ion-button>
+    </ion-item>
+    <!--行距调整-->
+    <ion-item color="dark" lines="none">
+        <ion-button class="read-footer-button" (click)="changeLineHeight(-0.1)" size="small" color="light" fill="clear"
+            slot="start">H-</ion-button>
+        <ion-label class="read-footer-number">{{config.lineSpace}}</ion-label>
+        <ion-button class="read-footer-button" (click)="changeLineHeight(0.1)" size="small" color="light" fill="clear"
+            slot="end">H+</ion-button>
+    </ion-item>
+    <!--目录和夜间模式-->
+    <ion-item color="dark" lines="full">
+        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="start"
+            (click)="goToCatalogPage()">目&emsp;录</ion-button>
+        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="end"
+            (click)="switchDarkMode()">夜&emsp;间
+        </ion-button>
+    </ion-item>
+</ion-footer>
+
+<!--章节切换提示-->
+<ion-badge *ngIf="gestureControl.canSwitchChapter" class="chapter-switch-tip">
+    {{gestureControl.chapterSwichTip}}
+</ion-badge>

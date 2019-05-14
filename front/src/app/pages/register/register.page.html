@@ -1,0 +1,37 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-item class="header-item" lines="none" color="dark">
+      <ion-icon (click)="goBack()" name="arrow-back" color="light" size="large" mode="ios"></ion-icon>
+      <ion-title>注册</ion-title>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-item>
+    <ion-label class="input-label" position="fixed">用户名：</ion-label>
+    <ion-input [(ngModel)]="input.uid" required="ture" placeholder="用户名，用于登录"></ion-input>
+  </ion-item>
+  <br />
+  <ion-item>
+    <ion-label class="input-label" position="fixed">昵称：</ion-label>
+    <ion-input [(ngModel)]="input.nickName" required="ture" placeholder="请设置昵称"></ion-input>
+  </ion-item>
+  <br />
+  <ion-item>
+    <ion-label class="input-label" position="fixed">密码：</ion-label>
+    <ion-input [(ngModel)]="input.pwd" required="ture" type="password" placeholder="请设置密码"></ion-input>
+  </ion-item>
+  <br />
+  <ion-item>
+    <ion-label class="input-label" position="fixed">确认密码：</ion-label>
+    <ion-input [(ngModel)]="input.comfirm" required="ture" type="password" placeholder="请再次输入密码"></ion-input>
+  </ion-item>
+  <br/>
+  <ion-item>
+    <ion-label class="input-label" position="fixed">邀请码：</ion-label>
+    <ion-input [(ngModel)]="input.referrer" placeholder="请输入邀请码"></ion-input>
+  </ion-item>
+  <br/>
+  <ion-button class="register-button" type="submit" color="dark" expand="full" size="default" (click)="register()">注册</ion-button>
+</ion-content>

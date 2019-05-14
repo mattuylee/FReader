@@ -1,0 +1,56 @@
+.header-item {
+    margin-left: -12px;
+}
+
+/*分组管理菜单按钮*/
+.group-more {
+    position: relative;
+    right: -4px;
+}
+//多选模式时隐藏“more”按钮
+.group-more-hidden {
+    display: none;
+}
+//多选控制按钮
+.multi-sel-button {
+    margin: 0 4px;
+}
+
+/*封面*/
+.book-cover-img {
+	width: 54px;
+	height: 72px;
+}
+/*书籍信息块*/
+.book-content {
+    margin: 12px 0 12px 0;
+    padding-left: 1em;
+    padding-right: 10px;
+}
+/*书籍标题*/
+.book-title {
+    font-size: 17px;
+}
+/*书籍状态信息*/
+.book-info {
+    color: #989aa2;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+/*“更多”图标*/
+.book-more {
+    color: darkgrey;
+}
+
+/*多选操作*/
+.multi-sel-options {
+    border-top: 1px solid lightgrey;
+    font-size: 18px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+.multi-sel-option-divider {
+    color: gainsboro;
+}

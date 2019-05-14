@@ -1,0 +1,57 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-item class="header-item" lines="none" color="dark">
+      <ion-icon (click)="goBack()" name="arrow-back" color="light" size="large" mode="ios"></ion-icon>
+      <ion-title>{{group ? group.title : ''}}</ion-title>
+      <ion-button class="group-more" fill="clear" color="light" slot="end"
+        [ngClass]="{'group-more-hidden': multiSel.canSelect}" (click)="actGroupSheet(group);$event.stopPropagation()">
+        <ion-icon name="more" size="large" mode="ios"></ion-icon>
+      </ion-button>
+      <!--多选时全选按钮-->
+      <ion-button class="multi-sel-button" *ngIf="multiSel.canSelect" color="light" slot="end" (click)="selectAll()">全选
+      </ion-button>
+      <!--多选时反选按钮-->
+      <ion-button class="multi-sel-button" *ngIf="multiSel.canSelect" color="light" slot="end"
+        (click)="reverseSelection()">反选
+      </ion-button>
+      <!--多选时取消按钮-->
+      <ion-button class="multi-sel-button" *ngIf="multiSel.canSelect" color="light" slot="end"
+        (click)="cancelMultiSelection()">取消</ion-button>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-list lines="inset">
+    <ion-item class="book-item" *ngFor="let book of books; let i = index" (click)="read(book)"
+      color="{{book.selected ? 'medium' : (multiSel.canSelect ? 'light' : '')}}">
+      <ion-img class="book-cover-img" [src]="book.entityBook ? book.entityBook.cover : strings.uri.defaultCover">
+      </ion-img>
+      <ion-label *ngIf="book.entityBook && book.shelfBook" class="book-content">
+        <h2 class="book-title">{{book.entityBook.name}}</h2>
+        <p class="book-info">
+          {{book.entityBook.author}} · {{(book.shelfBook.readWords / book.entityBook.wordCount * 100).toFixed(2)}}%
+        </p>
+        <p class="book-info">{{book.entityBook.status}} · {{book.entityBook.latestChapter}}</p>
+      </ion-label>
+      <ion-button fill="clear" color="dark" (click)="actBookSheet(book);$event.stopPropagation()">
+        <ion-icon class="book-more" name="more" mode="ios" size="large"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
+<ion-footer *ngIf="multiSel.canSelect">
+  <ion-item>
+    <ion-button fill="clear" color="dark" slot="start" (click)="downloadSelected()">
+      <ion-icon name="download"></ion-icon>下载
+    </ion-button>
+    <span class="multi-sel-option-divider">│</span>
+    <ion-button fill="clear" color="dark" (click)="moveSelected()" style="margin:auto;">
+      <ion-icon name="log-in" mode="ios"></ion-icon>移到分组
+    </ion-button>
+    <span class="multi-sel-option-divider">│</span>
+    <ion-button fill="clear" color="danger" slot="end" (click)="deleteSelected()">
+      <ion-icon name="trash"></ion-icon>删除
+    </ion-button>
+  </ion-item>
+</ion-footer>

@@ -12,9 +12,6 @@ namespace Freader.Models.Service
 {
     public class Crawler
     {
-        static Crawler()
-        {
-        }
         /// <summary>
         /// 搜索书籍
         /// </summary>
@@ -129,6 +126,8 @@ namespace Freader.Models.Service
         {
             switch (source)
             {
+                case RemoteSource.dingdian:
+                    return DingDian.Instance;
                 case RemoteSource.qidian:
                 default:
                     return QiDian.Instance;

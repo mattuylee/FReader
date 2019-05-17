@@ -40,18 +40,26 @@ namespace Freader.Models.Localizing
             ).ToArray();
             if (infos != null)
                 pages.AddRange(infos);
-            book.DetailPages = dbBook.DetailPages = pages.ToArray();
-            //更新数据
+            book.DetailPages = pages.ToArray();
+            if (book.Category == null || book.Category == string.Empty)
+                book.Category = dbBook.Category;
+            if (book.ChapterCount == 0)
+                book.ChapterCount = dbBook.ChapterCount;
+            if (book.WordCount == 0)
+                book.WordCount = dbBook.WordCount;
+            if (book.Status == null || book.Status == string.Empty)
+                book.Status = dbBook.Status;
+            if (book.Cover == null || book.Cover == string.Empty)
+                book.Cover = dbBook.Cover;
+            if (book.Words == null || book.Words == string.Empty)
+                book.Words = dbBook.Words;
+            if (book.Intro == null || book.Intro.Length == 0)
+                book.Intro = dbBook.Intro;
             if (dbBook.InfoLevel.Value > book.InfoLevel.Value)
-            {
-                dbBook.LastAccessTime = DateTime.Now;
-                await colBookWriter.ReplaceOneAsync(Builders<StorageBook>.Filter.Eq("Bid", dbBook.Bid), dbBook, option);
-            }
-            else
-            {
-                book.LastAccessTime = DateTime.Now;
-                await colBookWriter.ReplaceOneAsync(Builders<StorageBook>.Filter.Eq("Bid", book.Bid), book, option);
-            }
+                book.InfoLevel = dbBook.InfoLevel;
+                //更新数据
+            book.LastAccessTime = DateTime.Now;
+            await colBookWriter.ReplaceOneAsync(Builders<StorageBook>.Filter.Eq("Bid", book.Bid), book, option);
         }
         /// <summary>
         /// 更新章节目录（不含章节内容）

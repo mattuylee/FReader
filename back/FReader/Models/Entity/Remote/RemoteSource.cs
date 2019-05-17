@@ -7,6 +7,6 @@ namespace Freader.Models.Entity
     public enum RemoteSource
     {
         qidian,
-        jinjiang,
+        dingdian,
     }
 }

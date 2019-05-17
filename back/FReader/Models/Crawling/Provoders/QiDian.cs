@@ -38,7 +38,7 @@ namespace Freader.Models.Crawling
                 this.csrfToken = GetCsrfToken();
             }
         }
-
+        
         //搜索书籍
         public SearchResult Search(string keyword, int page = 1, bool syncPersist = false)
         {
@@ -47,7 +47,7 @@ namespace Freader.Models.Crawling
             string responseText = response.Content.ToString();
             HtmlParser htmlParser = new HtmlParser();
             IHtmlDocument doc = htmlParser.ParseDocument(responseText);
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            if (response.StatusCode != HttpStatusCode.OK)
             {
                 searchResult.Error = (int)(response.StatusCode) + " " + response.StatusCode.ToString();
                 searchResult.Page = -1;
@@ -70,7 +70,7 @@ namespace Freader.Models.Crawling
                 searchBook.Intro = new string[] { item.QuerySelector(".book-mid-info .intro")?.TextContent.Trim() };
                 searchBook.Words = item.QuerySelector(".book-right-info .total p span")?.TextContent.Trim();
                 searchBook.MakeId();
-                if (searchBook.Author == "" || searchBook.Name == "")
+                if (searchBook.Author == "" || searchBook.Name == "" || searchBook.Author == null || searchBook.Name == null)
                 {
                     searchResult.Error = "数据解析失败，请更新爬虫策略。";
                     return searchResult;
@@ -131,7 +131,7 @@ namespace Freader.Models.Crawling
             //书籍作者
             book.Author = doc.QuerySelector(".book-information .book-info h1 a")?.TextContent.Trim();
             //名称和作者是关键数据，用于生成book id，不能为空
-            if (book.Name == string.Empty || book.Author == string.Empty)
+            if (book.Name == string.Empty || book.Author == string.Empty || book.Author == null || book.Name == null)
             {
                 detailResult.Error = "解析数据失败";
                 return detailResult;
@@ -380,12 +380,7 @@ namespace Freader.Models.Crawling
         **/
         private static string GetWords(int wordCount)
         {
-            if (wordCount < 1000)
-                return wordCount + "字";
-            else if (wordCount < 10000)
-                return Math.Round(wordCount / 1000f, 1).ToString().TrimEnd('0').TrimEnd('.') + "千字";
-            else
-                return Math.Round(wordCount / 10000f, 2).ToString().TrimEnd('0').TrimEnd('.') + "万字";
+            return CXM.Utility.GetHumanWords(wordCount);
         }
 
         //获取访问ajax数据时需要的_csrfToken

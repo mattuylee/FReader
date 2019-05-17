@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Freader.Controllers;
 using Freader.Models.Crawling;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +17,7 @@ namespace Freader.API
         public static void Main(string[] args)
         {
             Test();
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             CreateWebHostBuilder(args).Build().Run();
         }
 

@@ -86,5 +86,32 @@ namespace CXM
             }
             return strBuilder.ToString().TrimEnd('&');
         }
+        //将文本转化为ANSI编码，并且经过URL Encode的格式
+        public static string EncodeToAnsiChinese(string text)
+        {
+            byte[] bytes = Encoding.GetEncoding("GB2312").GetBytes(text);
+            StringBuilder sb = new StringBuilder();
+            foreach(byte b in bytes)
+            {
+                sb.Append('%');
+                sb.Append(b.ToString("X"));
+            }
+            return sb.ToString();
+        }
+        /// <summary>
+        /// 将数值转换为人类友好的显示方式
+        /// </summary>
+        /// <param name="wordCount">被转化的数值</param>
+        /// <returns>易读的字数模式</returns>
+        public static string GetHumanWords(int wordCount)
+        {
+            if (wordCount < 1000)
+                return wordCount + "字";
+            else if (wordCount < 10000)
+                return Math.Round(wordCount / 1000f, 1).ToString().TrimEnd('0').TrimEnd('.') + "千字";
+            else
+                return Math.Round(wordCount / 10000f, 2).ToString().TrimEnd('0').TrimEnd('.') + "万字";
+        }
+
     }
 }

@@ -169,9 +169,15 @@ export class UtilityService {
    *    @param {boolean} dark 如果设置为true，适应黑暗背景风格
    *    @param {boolean} light 如果设置为true，适应明亮背景风格
    *    @param {string}  color 设置状态栏背景颜色值
-   *    @param {boolean} show 如果设置为false，隐藏状态栏
+   *    @param {boolean} hide 如果设置为true，隐藏状态栏
    */
-  setStatusBarStyle(param: { dark?: boolean, light?: boolean, color?: string, overlay?: boolean }) {
+  setStatusBarStyle(param: { dark?: boolean, light?: boolean, color?: string, hide?:boolean }) {
+    if (param.hide && this.statusBar.isVisible) {
+      this.statusBar.hide()
+    }
+    else if (!param.hide)
+      this.statusBar.show()
+
     //设置状态栏内容风格
     if (param.dark) {
       this.statusBar.styleLightContent()
@@ -183,12 +189,7 @@ export class UtilityService {
     }
     //设置状态栏背景色
     if (param.color)
-      this.statusBar.backgroundColorByHexString(param.color)
-
-    if (param.overlay) {
-      this.statusBar.styleBlackTranslucent()
-      this.statusBar.overlaysWebView(true)
-    }
+      this.statusBar.backgroundColorByHexString(param.color)      
   }
 
   /**
@@ -202,7 +203,8 @@ export class UtilityService {
    *    @param width 文字区宽度
    *    @param height 文字区高度
    *    @param startIndex 在text中开始截取的位置
-   *    @param noSpacePadding 不要使用中文空白符缩进段落
+   *    @param allowHeadPunc 允许行首标点
+   *    @param allowBlankLine 允许空行
    * @returns
    *    @param lines 截取的文本行
    *    @param start 开始截取的位置
@@ -218,56 +220,82 @@ export class UtilityService {
     width: number,
     height: number,
     startIndex?: number,
-    noSpacePadding?: boolean
+    intent?: number,
+    allowHeadPunc?: boolean,
+    allowBlankLine?: boolean
   }) {
+    if (option.width < option.fontSize)
+      option.width = option.fontSize
     canvasContext.font = option.fontSize + 'px ' + option.fontFamily
     if (!text) text = ''
-    let lines: string[] = []
-    //当前文字区高度和当前行宽度
-    let widthCount = 0, heightCount = option.lineHeight
+    let punctuationRegular = /[\.,:;\!\?'<>\(\)\[\]\{\}\+\-\*/=\u3002\uff1f\uff01\uff0c\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\uff08\uff09\u300a\u300b\u3008\u3009\u3010\u3011\u300e\u300f\u300c\u300d\ufe43\ufe44\u3014\u3015\u2026\u2014\uff5e\ufe4f\uffe5]/
+    //行
+    let lines: PageLine[] = []
+    //当前文字区高度和当前行宽度。算上首段落前的margin
+    let widthCount = 0, heightCount = option.lineHeight + option.paraMargin
     //段落起始点
     let stop = option.startIndex ? option.startIndex : 0
     let i = stop
     for (; i < text.length; i++) {
       if (text[i] == '\n') {
-        if (i > stop) {
-          let line = text.slice(stop, i)
-          if (!option.noSpacePadding && (stop == 0 || text[stop - 1] == '\n'))
-            line = '　'.repeat(2) + line
-          lines.push(line)
-          stop = i + 1
+        if (i > stop || option.allowBlankLine) {
+          lines.push({
+            text: text.slice(stop, i),
+            indent: stop == 0 || text[stop - 1] == '\n'
+          })
+          heightCount += option.lineHeight + option.paraMargin
         }
-        widthCount = 0
-        heightCount += option.lineHeight + option.paraMargin
+        stop = i + 1
+        widthCount = Number(option.intent)
         continue
       }
       let cW = canvasContext.measureText(text[i]).width
       widthCount += cW
       if (widthCount > option.width) {
         heightCount += option.lineHeight
-        widthCount = cW
+        //行首标点，回退两位
+        if (!option.allowHeadPunc && i > stop && punctuationRegular.test(text[i])) {
+          widthCount = 0
+          if (heightCount <= option.height)
+            i -= 2 //由于循环本身会执行++i所以要减2
+          else
+            --i //因为即将退出循环，不会再被循环本身加1了
+        }
+        else
+          widthCount = cW
       }
       if (heightCount > option.height) {
-        lines.push(text.slice(stop, i))
-        stop = i + 1
-        break;
+        if (i > stop) {
+          lines.push({
+            text: text.slice(stop, i),
+            indent: stop == 0 || text[stop - 1] == '\n'
+          })
+        }
+        stop = i
+        break
       }
     }
     if (i >= text.length) {
-      lines.push(text.slice(stop))
+      lines.push({
+        text: text.slice(stop),
+        indent: stop == 0 || text[stop - 1] == '\n'
+      })
       stop = text.length
     }
     let start = option.startIndex ? option.startIndex : 0
-    let result = {
+    return {
       lines: lines,
       start: start,
       next: stop,
       length: stop - start,
       ended: stop == text.length
     }
-    
-    console.log('divide result', result)
-    return result
+  }
+
+  //取字符打印长度
+  measureText(text: string, fontSize: number, fontFamily: string): number {
+    canvasContext.font = fontSize + 'px ' + fontFamily
+    return canvasContext.measureText(text).width
   }
 
   //注册返回键监控事件

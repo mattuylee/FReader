@@ -5,6 +5,7 @@ import { Router, NavigationExtras } from '@angular/router';
 import { StringsService } from './strings.service';
 import { Catalog } from '../common/catalog';
 import { ShelfBook } from '../common/book';
+import { UtilityService } from './utility.service';
 
 //事件名称
 const onReadPageNeedUpdate = "onReadPageNeedUpdate";
@@ -17,7 +18,8 @@ export class ReadService {
   constructor(
     private events: Events,
     private router: Router,
-    private strings: StringsService
+    private strings: StringsService,
+    private utility: UtilityService
   ) { }
 
 
@@ -27,6 +29,7 @@ export class ReadService {
    * @param fromReadPage 如果为true，直接返回上一页而不是载入新的阅读页
    */
   loadReadPage(param: ReadPageParam, fromReadPage: boolean) {
+    this.utility.setStatusBarStyle({ hide: true })
     if (fromReadPage) {
       history.back()
       this.events.publish(onReadPageNeedUpdate, param)
@@ -59,7 +62,7 @@ export class ReadService {
     let count = 0
     for (let i = 0; i <= chapterIndex; ++i)
       count += catalog.chapters[i].wordCount
-    return count
+    return Number(count)
   }
 }
 

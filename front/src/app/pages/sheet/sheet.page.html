@@ -1,5 +1,4 @@
-<ion-nav></ion-nav>
-<ion-header>
+<!--ion-header>
   <ion-toolbar color="dark">
     <ion-item class="header-item" color="dark">
       <ion-title>书架</ion-title>
@@ -8,8 +7,8 @@
       </a>
     </ion-item>
   </ion-toolbar>
-</ion-header>
-
+</ion-header-->
+<app-header [title]="'书架'" [searchEntry]="true"></app-header>
 <ion-content>
   <!--下拉刷新-->
   <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)" pullMin="100" pullMax="300" closeDuration="800ms">

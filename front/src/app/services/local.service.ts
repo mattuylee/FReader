@@ -150,6 +150,7 @@ export class LocalService {
 
     //书籍信息
     async setBookDetail(book: Book, source: RemoteSource) {
+        if (!book) return
         await this.storage.set(this.strings.getLocalStorageKey({
             dataType: 'book',
             source: source,
@@ -166,6 +167,7 @@ export class LocalService {
 
     //目录
     async setCatalog(catalog: Catalog, source: RemoteSource) {
+        if (!catalog) return
         return await this.storage.set(this.strings.getLocalStorageKey({
             dataType: 'catalog',
             source: source,
@@ -182,6 +184,7 @@ export class LocalService {
 
     //章节
     async setChapter(chapter: Chapter, source: RemoteSource) {
+        if (!chapter) return
         return await this.storage.get(this.strings.getLocalStorageKey({
             dataType: 'chapter',
             source: source,

@@ -26,6 +26,7 @@ const routes: Routes = [
   /* 书架分组 */
   /* params: { gid } */
   { path: 'group', loadChildren: './pages/group/group.module#GroupPageModule' },
+  { path: 'log', loadChildren: './pages/log/log.module#LogPageModule' },
 ];
 
 @NgModule({

@@ -13,6 +13,7 @@ export class AppComponent {
 
   constructor(
     private platform: Platform,
+    private statusBar: StatusBar,
     private splashScreen: SplashScreen,
     private utility: UtilityService,
   ) {
@@ -21,6 +22,7 @@ export class AppComponent {
 
   initializeApp() {
     this.platform.ready().then(() => {
+      this.statusBar.show()
       this.utility.setStatusBarStyle({ dark: true })
       this.splashScreen.hide()
       this.utility.registerBackButtonAction()

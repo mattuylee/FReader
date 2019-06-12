@@ -24,7 +24,11 @@ export class SettingPage implements OnInit {
     this.utility.setStatusBarStyle({ dark: true })
   }
 
-  gotoExplorePage() {
+  toLogPage() {
+    this.router.navigateByUrl(this.strings.uri.route.log)
+  }
+
+  toExplorePage() {
     this.router.navigateByUrl(this.strings.uri.route.explore, { replaceUrl: true })
   }
   //注销

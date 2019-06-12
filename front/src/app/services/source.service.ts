@@ -257,8 +257,9 @@ export class SourceService {
    * 创建或更新书架书籍
    * @param callback 回调函数，接受一个处理结果
    * @param book 书架书籍信息
+   * @param localOnly 是否仅更新本地数据
    */
-  putShelfBook(callback: (res: BaseResult) => any, book: ShelfBook) {
+  putShelfBook(callback: (res: BaseResult) => any, book: ShelfBook, localOnly: boolean = false) {
     if (!book) {
       callback(this.nullReferenceResult)
       return
@@ -266,6 +267,10 @@ export class SourceService {
     book.latestReadTime = new Date().getTime()
     this.cacheService.putShelfBook(book)
     this.localService.putShelfBooks([book])
+    if (localOnly) {
+      callback(new BaseResult())
+      return
+    }
     this.remoteService.putShelfBook(book).toPromise()
       .then((res: BaseResult) => { this.handleResult(res), callback(res) })
       .catch((e) => {
@@ -481,10 +486,21 @@ export class SourceService {
    */
   async getChapter(callback: (res: ChapterResult | BaseResult) => any, bid: string, cid: string, options: RequestOptions = this.defaultOption) {
     if (options.mode != RequestMode.remoteAlways) {
+      let chapter = this.cacheService.getChapter(cid)
+      if (chapter) {
+        let res = new ChapterResult()
+        res.chapter = chapter
+        this.cacheService.putChapter(chapter)
+        callback(res)
+        return
+      }
+    }
+    if (options.mode != RequestMode.remoteAlways) {
       let chapter = await this.localService.getChapter(cid, RemoteSource.qidian)
       if (chapter) {
         let res = new ChapterResult()
         res.chapter = chapter
+        this.cacheService.putChapter(chapter)
         callback(res)
         return
       }
@@ -495,6 +511,7 @@ export class SourceService {
     }
     this.remoteService.chapter(bid, cid).toPromise()
       .then((res: ChapterResult) => {
+        this.cacheService.putChapter(res.chapter)
         this.localService.setChapter(res.chapter, RemoteSource.qidian)
         this.handleResult(res)
         callback(res)

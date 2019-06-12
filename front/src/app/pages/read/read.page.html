@@ -1,45 +1,85 @@
-<!--ion-content必须放在最前面，因为代码里面使用了这个顺序-->
-<ion-content scrollEvents="true" (click)="onTap()" (touchend)="onTouchEnd($event)" (touchstart)="onTouchStart($event)"
-    (touchmove)="onTouchMove($event)" (ionScroll)="onScroll($event)">
-    <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)" pullMin="100" pullMax="300" closeDuration="800ms">
+<ion-content scrollEvents="true" (click)="onTap($event)" (touchend)="onTouchEnd($event);onSlideEnd($event)"
+    (touchstart)="onTouchStart($event);onSlideStart($event)" (touchmove)="onTouchMove($event);onSliding($event)"
+    (ionScroll)="onScroll($event)">
+    <ion-refresher *ngIf="!config.slideMode" slot="fixed" (ionRefresh)="onRefresh($event)"
+        pullMin="100" pullMax="300" closeDuration="800ms">
     </ion-refresher>
     <div padding *ngIf="!config.slideMode && chapter != null" [ngStyle]="style.bodyCss">
-        <p class="read-content-title">{{chapter.title}}</p>
+        <p class="read-content-title">{{chapter?.title}}</p>
         <p *ngFor="let line of chapter.contentLines" class="read-content-para">{{line}}</p>
     </div>
-
-    <div class="read-content-container" [ngStyle]="{...style.bodyCss, ...slide.frontStyle}">
-        <p class="read-content-para" *ngFor="let line of slide.backPage.lines">{{line}}</p>
-    </div>
-    <div class="read-content-container" [ngStyle]="{...style.bodyCss, ...slide.backStyle}">
-        <p class="read-content-para" *ngFor="let line of slide.frontPage.lines">{{line}}</p>
-    </div>
+    <ng-container *ngIf="config.slideMode">
+        <div class="read-content-container" [ngStyle]="slide.backStyle">
+            <div class="slide-top-title">
+                {{slide.chapterPages[slide.backIndex] ? chapter?.title : nextChapter?.title}}
+            </div>
+            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.backIndex] && !slide.nextPage">
+                <ion-spinner name="dots"></ion-spinner>
+                <p>加载中</p>
+            </div>
+            <p class="read-content-title" *ngIf="slide.chapterPages[slide.backIndex] ? slide.chapterPages[slide.backIndex].title : slide.nextPage?.title">
+                {{slide.chapterPages[slide.backIndex]
+                ? slide.chapterPages[slide.backIndex]?.title
+                : slide.nextPage?.title}}
+            </p>
+            <p class="read-content-para" [class.with-text-indent]="line.indent" *ngFor="let line of
+                (slide.chapterPages[slide.backIndex]
+                ? slide.chapterPages[slide.backIndex].lines
+                : ((slide.nextPage && slide.showExtraChapterPage)
+                    ? slide.nextPage.lines : []))">
+                {{line.text}}</p>
+            <ion-label class="slide-progress" [style.left]="slide.containerPadding + 'px'">
+                {{slide.backIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '-'}}</ion-label>
+            <ion-label class="slide-cur-time" [style.right]="slide.containerPadding + 1 + 'px'">{{currentTime}}</ion-label>
+        </div>
+        <div class="read-content-container" [ngStyle]="slide.frontStyle">
+            <div class="slide-top-title" *ngIf="chapter">
+                {{slide.chapterPages[slide.frontIndex] ? chapter?.title : previousChapter?.title}}
+            </div>
+            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.frontIndex] && !slide.previousPage">
+                <ion-spinner name="dots"></ion-spinner>
+                <p>加载中</p>
+            </div>
+            <p class="read-content-title" *ngIf="slide.chapterPages[slide.frontIndex] ? slide.chapterPages[slide.frontIndex].title : slide.previousPage?.title">
+                {{slide.chapterPages[slide.frontIndex]
+                ? slide.chapterPages[slide.frontIndex]?.title
+                : slide.previousPage?.title}}
+            </p>
+            <p class="read-content-para" [class.with-text-indent]="line.indent" *ngFor="let line of 
+            (slide.chapterPages[slide.frontIndex]
+            ? slide.chapterPages[slide.frontIndex].lines
+            : (slide.showExtraChapterPage
+                ? slide.previousPage?.lines : []))">
+                {{line.text}}</p>
+            <ion-label class="slide-progress" [style.left]="slide.containerPadding + 'px'">
+                {{slide.frontIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '-'}}</ion-label>
+            <ion-label class="slide-cur-time" [style.right]="slide.containerPadding + 1 + 'px'">{{currentTime}}</ion-label>
+        </div>
+        <div class="slide-mask"></div>
+    </ng-container>
 </ion-content>
 
 
 <!--绝对定位元素-->
 
 <!--顶部占位栏-->
-<div class="read-top-bar" *ngIf="config.slideMode" [ngStyle]="style.colorCss"></div>
+<div class="read-top-bar" *ngIf="!config.slideMode" [ngStyle]="style.colorCss"></div>
 
 <!--呼出菜单-->
-<ion-item *ngIf="menu.show" class="read-header" color="dark" lines="none">
-    <ion-icon name="arrow-back" (click)="goBack()" color="light" mode="ios"></ion-icon>
-    <p>&emsp;{{chapter ? chapter.title : ''}}</p>
-</ion-item>
+<app-header *ngIf="menu.show" class="read-header" [title]="chapter?.title" [backEntry]="true"></app-header>
 <div *ngIf="menu.show && !shelfControl.onShelf" class="add-to-shelf-button" (click)="addToShelf()">
     加入书架
 </div>
 <ion-footer *ngIf="menu.show">
     <!--章节切换按钮-->
     <ion-item color="dark" lines="full">
-        <ion-button class="read-footer-button" (click)="lastChapter(false)" size="small" color="light" fill="clear"
+        <ion-button class="read-footer-button" (click)="toLastChapter(false)" size="small" color="light" fill="clear"
             slot="start">上一章</ion-button>
-        <ion-button class="read-footer-button" (click)="nextChapter()" size="small" color="light" fill="clear"
+        <ion-button class="read-footer-button" (click)="toNextChapter()" size="small" color="light" fill="clear"
             slot="end">下一章</ion-button>
     </ion-item>
     <!--背景样式-->
-    <ion-item color="dark" lines="none">
+    <ion-item color="dark" lines="none" *ngIf="menu.expand">
         <ion-avatar class="background-block" (click)="setColor('#DBDBDB')">
             <img src="{{strings.uri.background.light}}" />
         </ion-avatar>
@@ -60,7 +100,7 @@
         </ion-avatar>
     </ion-item>
     <!--字体调整-->
-    <ion-item color="dark" lines="none">
+    <ion-item color="dark" lines="none" *ngIf="menu.expand">
         <ion-button class="read-footer-button" (click)="changeFontSize(-1)" size="small" color="light" fill="clear"
             slot="start">A-</ion-button>
         <ion-label class="read-footer-number">{{config.fontSize}}</ion-label>
@@ -68,24 +108,35 @@
             slot="end">A+</ion-button>
     </ion-item>
     <!--行距调整-->
-    <ion-item color="dark" lines="none">
+    <ion-item color="dark" lines="none" *ngIf="menu.expand">
         <ion-button class="read-footer-button" (click)="changeLineHeight(-0.1)" size="small" color="light" fill="clear"
             slot="start">H-</ion-button>
         <ion-label class="read-footer-number">{{config.lineSpace}}</ion-label>
         <ion-button class="read-footer-button" (click)="changeLineHeight(0.1)" size="small" color="light" fill="clear"
             slot="end">H+</ion-button>
     </ion-item>
+    <ion-item color="dark" lines="none" *ngIf="menu.expand">
+        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="start">
+            横屏模式
+        </ion-button>
+        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="end"
+            (click)="switchSlideMode()">覆盖翻页
+        </ion-button>
+    </ion-item>
     <!--目录和夜间模式-->
-    <ion-item color="dark" lines="full">
+    <ion-item color="dark" lines="none" *ngIf="!menu.expand">
         <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="start"
             (click)="goToCatalogPage()">目&emsp;录</ion-button>
+        <ion-button class="read-footer-number" size="small" color="light" fill="clear" (click)="switchDarkMode()">
+            夜&emsp;间
+        </ion-button>
         <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="end"
-            (click)="switchDarkMode()">夜&emsp;间
+            (click)="expandMenu()">设&emsp;置
         </ion-button>
     </ion-item>
 </ion-footer>
 
 <!--章节切换提示-->
-<ion-badge *ngIf="gestureControl.canSwitchChapter" class="chapter-switch-tip">
-    {{gestureControl.chapterSwichTip}}
+<ion-badge *ngIf="chapterGesture.canSwitchChapter" class="chapter-switch-tip">
+    {{chapterGesture.chapterSwichTip}}
 </ion-badge>

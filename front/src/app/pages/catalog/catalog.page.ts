@@ -30,12 +30,15 @@ export class CatalogPage implements OnInit {
 
   async ngOnInit() {
     this.utility.showLoading()
+    this.title = this.activeRoute.snapshot.paramMap.get("title")
     this.sourceService.getCatalog((res: CatalogResult) => {
-      if (res.error)
+      if (res.error) {
         this.utility.showToast("获取目录失败，请检查网络连接。Error：\n" + res.error)
+        this.utility.hideLoading()
+        return
+      }
       this.chapters = res.catalog.chapters
-      this.title = this.activeRoute.snapshot.paramMap.get("title")
-      if (!this.title || this.title == "")
+      if (!this.title)
         this.title = "目录"
       this.utility.hideLoading()
     }, this.activeRoute.snapshot.paramMap.get("bid"))

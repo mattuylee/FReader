@@ -1,10 +1,12 @@
-<ion-header>
-  <ion-toolbar color="dark">
-    <ion-title>设置</ion-title>
-  </ion-toolbar>
-</ion-header>
-
+<app-header title="设置"></app-header>
 <ion-content padding>
+  <ion-list>
+    <ion-item color="light" (click)="toLogPage()">
+      运行日志
+      <ion-icon name="arrow-forward" mode="ios" slot="end"></ion-icon>
+    </ion-item>
+  </ion-list>
+
   <ion-button expand="block" color="danger" size="default" (click)="logout()">退出登录</ion-button>
 </ion-content>
 
@@ -14,7 +16,7 @@
     <ion-icon name="book"></ion-icon>
     <ion-label>{{strings.tab.sheet}}</ion-label>
   </ion-tab-button>
-  <ion-tab-button class="tab-button" (click)="gotoExplorePage()">
+  <ion-tab-button class="tab-button" (click)="toExplorePage()">
     <ion-icon name="search"></ion-icon>
     <ion-label>{{strings.tab.explore}}</ion-label>
   </ion-tab-button>

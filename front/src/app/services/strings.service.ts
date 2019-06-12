@@ -16,8 +16,8 @@ export class StringsService {
   constructor(
   ){ }
 
-  public baseUrl: string = 'http://localhost:3280'
-  // public baseUrl: string = 'https://mattuy.top/freader'
+  // public baseUrl: string = 'http://localhost:3280'
+  public baseUrl: string = 'https://mattuy.top/freader'
   //本地数据存储目录
   private localBase = 'freader://local'
 
@@ -82,6 +82,7 @@ export class StringsService {
       //页面导航路径
       route: {
         shelf: '/sheet',
+        search: '/search',
         explore: '/explore',
         setting: '/setting',
         login: '/login',
@@ -90,7 +91,8 @@ export class StringsService {
         catalog: '/catalog',
         read: '/read',
         group: '/group',
-        shelfGroup: '/shelf-group'
+        shelfGroup: '/shelf-group',
+        log: '/log'
       },
       user: {
         //登录
@@ -108,13 +110,13 @@ export class StringsService {
       },
       qidian: {
         //起点搜索页
-        search: this.baseUrl + '/qidian/search',
+        search: this.baseUrl + '/dingdian/search',
         //起点详情页
-        detail: this.baseUrl + '/qidian/detail',
+        detail: this.baseUrl + '/dingdian/detail',
         //起点目录页
-        catalog: this.baseUrl + '/qidian/catalog',
+        catalog: this.baseUrl + '/dingdian/catalog',
         //起点章节内容链接
-        chapter: this.baseUrl + '/qidian'
+        chapter: this.baseUrl + '/dingdian'
       }
     }
   }

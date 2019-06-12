@@ -5,6 +5,7 @@ import { DetaiResult } from '../common/request-result/detail-result';
 import { ShelfGroupResult } from '../common/request-result/shelf-group-result';
 import { User } from '../common/user';
 import { UserConfig } from '../common/config';
+import { Chapter } from '../common/chapter';
 
 @Injectable({
   providedIn: 'root'
@@ -24,6 +25,8 @@ export class CacheService {
   private shelfBooks: Map<string, ShelfBook> = new Map<string, ShelfBook>()
   //书架分组缓存，key = gid
   private shelfGroups: Map<string, ShelfBookGroup> = new Map<string, ShelfBookGroup>()
+  //章节缓存，key = cid
+  private chapters: Chapter[] = [].fill(null, 0, 20)
 
 
 //清除缓存
@@ -130,5 +133,27 @@ clearCache(option: {
     let groups: ShelfBookGroup[] = []
     this.shelfGroups.forEach((i) =>groups.push(i))
     return groups
+  }
+
+  //章节
+  putChapter(chapter: Chapter) {
+     if (!chapter) return
+    for (let i = 0; i < this.chapters.length; ++i) {
+      if (this.chapters[i].cid == chapter.cid) {
+        this.chapters[i] = chapter
+        return
+      }
+    }
+    if (this.chapters.length >= 20) {
+      this.chapters.shift()
+      this.chapters.push(chapter)
+    }
+  }
+  getChapter(cid: string): Chapter {
+    for (let chapter of this.chapters) {
+      if (chapter.cid == cid)
+      return chapter
+    }
+    return null
   }
 }

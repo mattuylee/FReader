@@ -11,7 +11,7 @@ namespace Freader.Models.Entity
         public string Gid;
         public string LatestReadTime;
         public int ChapterIndex;
-        public int ReadProgress;
+        public float ReadProgress;
         public int ReadWords;
     }
 }

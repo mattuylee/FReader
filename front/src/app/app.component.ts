@@ -3,7 +3,7 @@ import { Platform } from '@ionic/angular';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { UtilityService } from 'src/app/services/utility.service';
-import { LocalService } from './services/local.service';
+import { ReadService } from './services/read.service';
 
 @Component({
   selector: 'app-root',
@@ -16,16 +16,21 @@ export class AppComponent {
     private statusBar: StatusBar,
     private splashScreen: SplashScreen,
     private utility: UtilityService,
+    private readService: ReadService,
   ) {
     this.initializeApp();
   }
 
   initializeApp() {
     this.platform.ready().then(() => {
+      this.splashScreen.hide()
       this.statusBar.show()
       this.utility.setStatusBarStyle({ dark: true })
-      this.splashScreen.hide()
       this.utility.registerBackButtonAction()
+      this.platform.resume.subscribe(() => {
+        if (!this.readService.isInReadPage())
+          this.statusBar.show()
+      })
     })
   }
 }

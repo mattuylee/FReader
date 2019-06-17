@@ -22,6 +22,17 @@ export class ReadService {
     private utility: UtilityService
   ) { }
 
+  private inReadPage = false
+
+  public setReadPageEntered() {
+    this.inReadPage = true
+  }
+  public setReadPageLeaved() {
+    this.inReadPage = false
+  }
+  public isInReadPage() {
+    return this.inReadPage
+  }
 
   /**
    * 更新阅读页数据

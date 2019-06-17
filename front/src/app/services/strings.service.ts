@@ -77,7 +77,8 @@ export class StringsService {
         //护眼绿
         greenEye: 'assets/img/background/green-eye.png',
         //深秋麒麟
-        paleGodenrod: 'assets/img/background/pale-godenrod.png'
+        paleGodenrod: 'assets/img/background/pale-godenrod.png',
+        pic: 'assets/img/background/pic.png'
       },
       //页面导航路径
       route: {

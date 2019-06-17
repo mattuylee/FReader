@@ -4,6 +4,8 @@ import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { AppMinimize } from '@ionic-native/app-minimize/ngx';
 import { Router } from '@angular/router';
 import { StringsService } from './strings.service';
+import { ScreenOrientation } from '@ionic-native/screen-orientation/ngx';
+import { PageLine } from '../common/read-page';
 
 const canvasContext = document.createElement('canvas').getContext('2d')
 
@@ -12,11 +14,12 @@ const canvasContext = document.createElement('canvas').getContext('2d')
 })
 export class UtilityService {
   constructor(
+    private platform: Platform,
+    private statusBar: StatusBar,
+    private screenOrientation: ScreenOrientation,
+    private appMiniMize: AppMinimize,
     public router: Router,
     private alertController: AlertController,
-    private appMiniMize: AppMinimize,
-    private statusBar: StatusBar,
-    private platform: Platform,
     private strings: StringsService
   ) { }
 
@@ -33,7 +36,7 @@ export class UtilityService {
         position: absolute;
         text-align: center;
         width: 100%;
-        z-index: 1;
+        z-index: 10;
       }
       #-freader-toast {
         background: #222428;
@@ -63,7 +66,7 @@ export class UtilityService {
         position: absolute;
         text-align: center;
         width: 100%;
-        z-index: 1;
+        z-index: 10;
       }
       #-freader-loading-spinner-block {
         background: rgba(245, 248, 248, 0.8);
@@ -171,7 +174,7 @@ export class UtilityService {
    *    @param {string}  color 设置状态栏背景颜色值
    *    @param {boolean} hide 如果设置为true，隐藏状态栏
    */
-  setStatusBarStyle(param: { dark?: boolean, light?: boolean, color?: string, hide?:boolean }) {
+  setStatusBarStyle(param: { dark?: boolean, light?: boolean, color?: string, hide?: boolean }) {
     if (param.hide && this.statusBar.isVisible) {
       this.statusBar.hide()
     }
@@ -189,9 +192,16 @@ export class UtilityService {
     }
     //设置状态栏背景色
     if (param.color)
-      this.statusBar.backgroundColorByHexString(param.color)      
+      this.statusBar.backgroundColorByHexString(param.color)
   }
 
+  //设置屏幕方向
+  setScreenOrientation(landscape: boolean): Promise<any> {
+    if (landscape)
+      return this.screenOrientation.lock('landscape-primary')
+    else
+      return this.screenOrientation.lock('portrait')
+  }
   /**
    * 从一段文本中截取一部分，并以换行符分割成行。至多它们能够显示在指定的区域中
    * @param text 待分割文本
@@ -224,18 +234,27 @@ export class UtilityService {
     allowHeadPunc?: boolean,
     allowBlankLine?: boolean
   }) {
+    console.log(option)
     if (option.width < option.fontSize)
       option.width = option.fontSize
     canvasContext.font = option.fontSize + 'px ' + option.fontFamily
     if (!text) text = ''
-    let punctuationRegular = /[\.,:;\!\?'<>\(\)\[\]\{\}\+\-\*/=\u3002\uff1f\uff01\uff0c\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\uff08\uff09\u300a\u300b\u3008\u3009\u3010\u3011\u300e\u300f\u300c\u300d\ufe43\ufe44\u3014\u3015\u2026\u2014\uff5e\ufe4f\uffe5]/
+    let punctuationRegular = /[\.,:;\!\?"'\)\]\}\|\u3002\uff1f\uff01\uff0c\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\uff09\u300b\u3009\u3011\u300f\u300d\ufe44\u3015\u2026]/
     //行
     let lines: PageLine[] = []
-    //当前文字区高度和当前行宽度。算上首段落前的margin
-    let widthCount = 0, heightCount = option.lineHeight + option.paraMargin
-    //段落起始点
+    //当前行宽度
+    let widthCount = 0
+    //计算首行缩进
+    if (option.startIndex == 0 || text[option.startIndex - 1] == '\n') {
+      widthCount = Number(option.intent)
+    }
+    //当前文字区高度,算上首段落前的margin
+    let heightCount = option.lineHeight + option.paraMargin
+    //分页起点
     let stop = option.startIndex ? option.startIndex : 0
     let i = stop
+    //上一个行首字符的位置，用于行首为标点的情况的计算
+    let lastLineHeadIndex = stop
     for (; i < text.length; i++) {
       if (text[i] == '\n') {
         if (i > stop || option.allowBlankLine) {
@@ -243,32 +262,56 @@ export class UtilityService {
             text: text.slice(stop, i),
             indent: stop == 0 || text[stop - 1] == '\n'
           })
-          heightCount += option.lineHeight + option.paraMargin
+          heightCount += option.paraMargin + option.lineHeight
         }
-        stop = i + 1
         widthCount = Number(option.intent)
+        stop = i + 1
+        lastLineHeadIndex = stop
         continue
       }
       let cW = canvasContext.measureText(text[i]).width
       widthCount += cW
       if (widthCount > option.width) {
         heightCount += option.lineHeight
-        //行首标点，回退两位
-        if (!option.allowHeadPunc && i > stop && punctuationRegular.test(text[i])) {
+        //行首标点处理
+        //和行末引号处理（当前页最后一行时不处理）
+        if ((!option.allowHeadPunc && i > stop && punctuationRegular.test(text[i]))
+          || (i > 0 && heightCount <= option.height && /['"\u2018\u2019\u201c\u201d]/.test(text[i - 1]))) {
           widthCount = 0
-          if (heightCount <= option.height)
-            i -= 2 //由于循环本身会执行++i所以要减2
-          else
-            --i //因为即将退出循环，不会再被循环本身加1了
+          let nonPuncIndex = NaN //记录第一个非标点字符的位置
+          //以前一行最后一个非标点字符作为新行首字符
+          //同时要保证该字符前面不是引号，因为浏览器不允许引号在行末
+          //若直到上一行首都未找到非标点字符，则将当前标点当成正常字符处理
+          //由于已经将widthCount置为0，因此无论如何都要重新扫描当前字符，所以--i一定执行，故放在循环首
+          for (let c = --i; c > lastLineHeadIndex; --c) {
+            if (punctuationRegular.test(text[c]))
+              continue
+            if (nonPuncIndex == NaN)
+              nonPuncIndex = c
+            if (/[^'"\u2018\u2019\u201c\u201d]/.test(text[c])) {
+              nonPuncIndex = c
+              break
+            }
+          }
+          if (nonPuncIndex !== NaN) {
+            //如果当前页未结束，游标位移到上一个非标点字符之前，使其被下次循环扫描
+            //如果当前页正好结束，则当前页只取到上一个非标点字符之前（不含）
+            lastLineHeadIndex = nonPuncIndex
+            if (heightCount <= option.height)
+              i = nonPuncIndex - 1
+          }
         }
-        else
+        else {
           widthCount = cW
+          lastLineHeadIndex = i
+        }
       }
       if (heightCount > option.height) {
         if (i > stop) {
           lines.push({
             text: text.slice(stop, i),
-            indent: stop == 0 || text[stop - 1] == '\n'
+            indent: stop == 0 || text[stop - 1] == '\n',
+            fullLastLine: true
           })
         }
         stop = i
@@ -283,6 +326,7 @@ export class UtilityService {
       stop = text.length
     }
     let start = option.startIndex ? option.startIndex : 0
+
     return {
       lines: lines,
       start: start,

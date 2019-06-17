@@ -1,6 +1,6 @@
-<ion-content scrollEvents="true" (click)="onTap($event)" (touchend)="onTouchEnd($event);onSlideEnd($event)"
+<ion-content (click)="onTap($event)" (touchend)="onTouchEnd($event);onSlideEnd($event)"
     (touchstart)="onTouchStart($event);onSlideStart($event)" (touchmove)="onTouchMove($event);onSliding($event)"
-    (ionScroll)="onScroll($event)">
+    >
     <ion-refresher *ngIf="!config.slideMode" slot="fixed" (ionRefresh)="onRefresh($event)"
         pullMin="100" pullMax="300" closeDuration="800ms">
     </ion-refresher>
@@ -13,47 +13,50 @@
             <div class="slide-top-title">
                 {{slide.chapterPages[slide.backIndex] ? chapter?.title : nextChapter?.title}}
             </div>
-            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.backIndex] && !slide.nextPage">
+            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.backIndex] && !slide.nextPage && slide.showExtraChapterPage">
                 <ion-spinner name="dots"></ion-spinner>
                 <p>加载中</p>
             </div>
-            <p class="read-content-title" *ngIf="slide.chapterPages[slide.backIndex] ? slide.chapterPages[slide.backIndex].title : slide.nextPage?.title">
+            <p class="slide-content-title" *ngIf="slide.chapterPages[slide.backIndex] ? slide.chapterPages[slide.backIndex].title : slide.nextPage?.title">
                 {{slide.chapterPages[slide.backIndex]
                 ? slide.chapterPages[slide.backIndex]?.title
                 : slide.nextPage?.title}}
             </p>
-            <p class="read-content-para" [class.with-text-indent]="line.indent" *ngFor="let line of
+            <p class="read-content-para" [ngClass]="{ 'with-text-indent': line.indent, 'with-last-line-justify': line.fullLastLine }"
+                *ngFor="let line of
                 (slide.chapterPages[slide.backIndex]
                 ? slide.chapterPages[slide.backIndex].lines
-                : ((slide.nextPage && slide.showExtraChapterPage)
-                    ? slide.nextPage.lines : []))">
+                : (slide.showExtraChapterPage
+                    ? slide.nextPage?.lines : []))">
                 {{line.text}}</p>
-            <ion-label class="slide-progress" [style.left]="slide.containerPadding + 'px'">
-                {{slide.backIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '-'}}</ion-label>
-            <ion-label class="slide-cur-time" [style.right]="slide.containerPadding + 1 + 'px'">{{currentTime}}</ion-label>
+            <ion-label class="slide-progress">
+                {{slide.backIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '0'}}
+            </ion-label>
+            <ion-label class="slide-cur-time">{{currentTime}}</ion-label>
         </div>
         <div class="read-content-container" [ngStyle]="slide.frontStyle">
             <div class="slide-top-title" *ngIf="chapter">
                 {{slide.chapterPages[slide.frontIndex] ? chapter?.title : previousChapter?.title}}
             </div>
-            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.frontIndex] && !slide.previousPage">
+            <div class="slide-loading" *ngIf="!slide.chapterPages[slide.frontIndex] && (!slide.showExtraChapterPage || !slide.previousPage)">
                 <ion-spinner name="dots"></ion-spinner>
                 <p>加载中</p>
             </div>
-            <p class="read-content-title" *ngIf="slide.chapterPages[slide.frontIndex] ? slide.chapterPages[slide.frontIndex].title : slide.previousPage?.title">
+            <p class="slide-content-title" *ngIf="slide.chapterPages[slide.frontIndex] ? slide.chapterPages[slide.frontIndex].title : slide.previousPage?.title">
                 {{slide.chapterPages[slide.frontIndex]
                 ? slide.chapterPages[slide.frontIndex]?.title
                 : slide.previousPage?.title}}
             </p>
-            <p class="read-content-para" [class.with-text-indent]="line.indent" *ngFor="let line of 
-            (slide.chapterPages[slide.frontIndex]
-            ? slide.chapterPages[slide.frontIndex].lines
-            : (slide.showExtraChapterPage
-                ? slide.previousPage?.lines : []))">
+            <p class="read-content-para" [class.with-text-indent]="line.indent" [ngClass]="{ 'with-text-indent': line.indent, 'with-last-line-justify': line.fullLastLine }"
+                *ngFor="let line of 
+                (slide.chapterPages[slide.frontIndex]
+                ? slide.chapterPages[slide.frontIndex].lines
+                : (slide.showExtraChapterPage
+                    ? slide.previousPage?.lines : []))">
                 {{line.text}}</p>
-            <ion-label class="slide-progress" [style.left]="slide.containerPadding + 'px'">
-                {{slide.frontIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '-'}}</ion-label>
-            <ion-label class="slide-cur-time" [style.right]="slide.containerPadding + 1 + 'px'">{{currentTime}}</ion-label>
+            <ion-label class="slide-progress">
+                {{slide.frontIndex + 1}}/{{slide.chapterPages ? slide.chapterPages.length : '0'}}</ion-label>
+            <ion-label class="slide-cur-time">{{currentTime}}</ion-label>
         </div>
         <div class="slide-mask"></div>
     </ng-container>
@@ -61,9 +64,6 @@
 
 
 <!--绝对定位元素-->
-
-<!--顶部占位栏-->
-<div class="read-top-bar" *ngIf="!config.slideMode" [ngStyle]="style.colorCss"></div>
 
 <!--呼出菜单-->
 <app-header *ngIf="menu.show" class="read-header" [title]="chapter?.title" [backEntry]="true"></app-header>
@@ -73,9 +73,9 @@
 <ion-footer *ngIf="menu.show">
     <!--章节切换按钮-->
     <ion-item color="dark" lines="full">
-        <ion-button class="read-footer-button" (click)="toLastChapter(false)" size="small" color="light" fill="clear"
+        <ion-button class="read-footer-button" (click)="toLastChapter(false, true)" size="small" color="light" fill="clear"
             slot="start">上一章</ion-button>
-        <ion-button class="read-footer-button" (click)="toNextChapter()" size="small" color="light" fill="clear"
+        <ion-button class="read-footer-button" (click)="toNextChapter(true)" size="small" color="light" fill="clear"
             slot="end">下一章</ion-button>
     </ion-item>
     <!--背景样式-->
@@ -83,7 +83,7 @@
         <ion-avatar class="background-block" (click)="setColor('#DBDBDB')">
             <img src="{{strings.uri.background.light}}" />
         </ion-avatar>
-        <ion-avatar class="background-block" (click)="setColor('#ECF8D6')">
+        <ion-avatar class="background-block" (click)="setColor('#d4dcc5')">
             <img src="{{strings.uri.background.greenEye}}" />
         </ion-avatar>
         <ion-avatar class="background-block" (click)="setColor('#FAF0E6')">
@@ -95,7 +95,7 @@
         <ion-avatar class="background-block" (click)="setColor('#F8F8FF')">
             <img src="{{strings.uri.background.ghostWhite}}" />
         </ion-avatar>
-        <ion-avatar class="background-block" (click)="setColor('#EEE8AA')">
+        <ion-avatar class="background-block" (click)="setColor('url(' + strings.uri.background.pic + ')')">
             <img src="{{strings.uri.background.paleGodenrod}}" />
         </ion-avatar>
     </ion-item>
@@ -116,8 +116,8 @@
             slot="end">H+</ion-button>
     </ion-item>
     <ion-item color="dark" lines="none" *ngIf="menu.expand">
-        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="start">
-            横屏模式
+        <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="start"
+          (click)="switchOrientation()">横屏模式
         </ion-button>
         <ion-button class="read-footer-button" size="small" color="light" fill="clear" slot="end"
             (click)="switchSlideMode()">覆盖翻页

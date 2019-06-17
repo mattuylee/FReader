@@ -137,22 +137,21 @@ clearCache(option: {
 
   //章节
   putChapter(chapter: Chapter) {
-     if (!chapter) return
+    if (!chapter) return
     for (let i = 0; i < this.chapters.length; ++i) {
       if (this.chapters[i].cid == chapter.cid) {
         this.chapters[i] = chapter
         return
       }
     }
-    if (this.chapters.length >= 20) {
+    if (this.chapters.length >= 20)
       this.chapters.shift()
-      this.chapters.push(chapter)
-    }
+    this.chapters.push(chapter)
   }
   getChapter(cid: string): Chapter {
     for (let chapter of this.chapters) {
       if (chapter.cid == cid)
-      return chapter
+        return chapter
     }
     return null
   }

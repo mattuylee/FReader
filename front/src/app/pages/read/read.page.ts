@@ -14,6 +14,7 @@ import { ShelfBook } from 'src/app/common/book';
 import { ShelfResult } from 'src/app/common/request-result/shelf-result';
 import { UserConfig } from 'src/app/common/config';
 import { ConfigResult } from 'src/app/common/request-result/config-result';
+import { SlidingState, ChapterPage, PageLine } from 'src/app/common/read-page';
 
 @Component({
   selector: 'app-read',
@@ -59,6 +60,15 @@ export class ReadPage implements OnInit, OnDestroy {
     onShelf: false
   }
 
+  //切换章节控制
+  chapterControl = {
+    /**
+     * 从非内存的数据源请求章节时设置的随机值，如果请求的回调函数被调用时此变量的值
+     * 已改变，则表示改请求已被抛弃
+     */
+    current: 0
+  }
+
   //切换章节手势控制
   chapterGesture = {
     enabled: false,          //已启用手势控制
@@ -71,13 +81,14 @@ export class ReadPage implements OnInit, OnDestroy {
 
   //翻页手势控制
   slideGesture: {
-    state: SlidingState           //当前状态
-    beginTime: number             //触摸开始的时间
-    beginPos: number              //触摸开始的位置
-    curPosition: number           //当前滑动的div位置
-    direction: 'next' | 'previous'//滑动方向
-    reversedDistance: number,     //连续反向运动行程累计，当大于一定值时取消本次翻页
-    timer: any                    //动画定时器
+    state: SlidingState             //当前状态
+    beginTime: number               //触摸开始的时间
+    beginPos: number                //触摸开始的位置
+    curPosition: number             //当前滑动的div位置
+    direction: 'next' | 'previous'  //滑动方向
+    reversedDistance: number        //连续反向运动行程累计，当大于一定值时取消本次翻页
+    canceled: boolean               //已取消本次翻页，反向翻页
+    timer: any                      //动画定时器
   } = {
       state: SlidingState.unstarted,
       beginTime: 0,
@@ -85,6 +96,7 @@ export class ReadPage implements OnInit, OnDestroy {
       curPosition: 0,
       direction: null,
       reversedDistance: 0,
+      canceled: false,
       timer: null
     }
 
@@ -95,11 +107,6 @@ export class ReadPage implements OnInit, OnDestroy {
       color: "#000",
       fontSize: "20px",
       lineHeight: "1.5em",
-    },
-    //背景颜色css样式
-    colorCss: {
-      backgroundColor: "#f2f2f2",
-      color: "#000",
     },
     //是否允许上传配置
     canUploadConfig: false
@@ -114,7 +121,6 @@ export class ReadPage implements OnInit, OnDestroy {
     frontIndex: number
     frontStyle: any
     backStyle: any
-    containerPadding: number,
     showExtraChapterPage: boolean //是否显示上一章末帧（或者下一章首帧）
     textArea: {
       width: number,
@@ -126,7 +132,6 @@ export class ReadPage implements OnInit, OnDestroy {
       nextPage: null,
       frontIndex: -1,
       backIndex: -1,
-      containerPadding: this.config.fontSize,
       showExtraChapterPage: true,
       textArea: {
         width: 0,
@@ -136,13 +141,11 @@ export class ReadPage implements OnInit, OnDestroy {
         ...this.style.bodyCss,
         width: document.documentElement.clientWidth + 'px',
         height: document.documentElement.clientHeight + 'px',
-        padding: '0 1em'
       },
       backStyle: {
         ...this.style.bodyCss,
         width: document.documentElement.clientWidth + 'px',
         height: document.documentElement.clientHeight + 'px',
-        padding: '0 1em'
       }
     }
 
@@ -151,10 +154,7 @@ export class ReadPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.readService.registerDataUpdateEvent(this.onReadDataUpdatedHandler)
-    this.slide.textArea = {
-      width: document.documentElement.clientWidth - this.slide.containerPadding * 2,
-      height: document.documentElement.clientHeight - 30 - 30, //不含margin
-    }
+    this.slide.textArea = this.getTextArea()
     this.loadConfig()
     this.config.slideMode = true
   }
@@ -164,8 +164,13 @@ export class ReadPage implements OnInit, OnDestroy {
     this.readService.unRegisterDataUpdateEvent()
   }
 
+  ionViewWillEnter() {
+    this.readService.setReadPageEntered()
+  }
   ionViewWillLeave() {
     this.putShelfBook()
+    this.readService.setReadPageLeaved()
+    this.utility.setScreenOrientation(false)
   }
 
   //重新加载阅读数据
@@ -254,10 +259,10 @@ export class ReadPage implements OnInit, OnDestroy {
   /**
    * 加载上一章
    * @param scrollToBottom 是否滚动到章节最后
+   * @param loading 显示加载动画。点击控制按钮切换章节时使用
    * @returns canGet 是否可以加载上一章
    */
-  toLastChapter(scrollToBottom: boolean) {
-    console.log('last')
+  toLastChapter(scrollToBottom: boolean, loading?: boolean) {
     if (this.previousChapter) {
       this.nextChapter = this.chapter
       this.chapter = this.previousChapter
@@ -265,13 +270,17 @@ export class ReadPage implements OnInit, OnDestroy {
       --this.shelfBook.chapterIndex
       if (this.slide.chapterPages && this.slide.chapterPages.length > 0)
         this.slide.nextPage = this.slide.chapterPages[0]
-      this.reloadChapterPages(-1)
+      this.reloadChapterPages(-scrollToBottom)
       this.putShelfBook()
       this.prepareChapter('previous')
       return
     }
     if (!this.tryGetLastChapterAvailability()) return
-    console.log('last, get')
+    if (loading) {
+      this.slide.showExtraChapterPage = false
+      this.slide.frontIndex = this.slide.backIndex = -1
+    }
+    this.chapterControl.current = undefined
     this.getChapter(this.shelfBook.bid, this.catalog.chapters[this.shelfBook.chapterIndex - 1].cid, -1, -scrollToBottom)
   }
   //试试是否可以获取下一章
@@ -287,9 +296,11 @@ export class ReadPage implements OnInit, OnDestroy {
     return true
   }
 
-  //加载下一章
-  toNextChapter() {
-    console.log('next')
+  /**
+   * 加载下一章
+   * @param loading 显示加载动画。点击控制按钮切换章节时使用
+   */
+  toNextChapter(loading?: boolean) {
     if (this.nextChapter) {
       this.previousChapter = this.chapter
       this.chapter = this.nextChapter
@@ -303,7 +314,11 @@ export class ReadPage implements OnInit, OnDestroy {
       return
     }
     if (!this.tryGetNextChapterAvailability()) return
-    console.log('next, get')
+    if (loading) {
+      this.slide.showExtraChapterPage = false
+      this.slide.frontIndex = this.slide.backIndex = -1
+    }
+    this.chapterControl.current = undefined
     this.getChapter(this.shelfBook.bid, this.catalog.chapters[this.shelfBook.chapterIndex + 1].cid, 1, 0)
   }
 
@@ -347,9 +362,14 @@ export class ReadPage implements OnInit, OnDestroy {
   async getChapter(bid: string, cid: string, delta: number, scroll: number) {
     if (!this.config.slideMode)
       this.utility.showLoading()
+    let sessionId = this.chapterControl.current = Date.now() + Math.random()
     this.sourceService.getChapter((res: ChapterResult) => {
-      this.utility.hideLoading()
-      if (res.error != "") {
+      if (!this.config.slideMode)
+        this.utility.hideLoading()
+      if (sessionId != this.chapterControl.current)
+        return
+      this.slide.showExtraChapterPage = true
+      if (res.error) {
         this.utility.showToast("获取数据失败：" + res.error)
         return
       }
@@ -388,6 +408,15 @@ export class ReadPage implements OnInit, OnDestroy {
     }, bid, cid)
   }
 
+  getTextArea() {
+    return {
+      //减去左右margin
+      width: document.documentElement.clientWidth - 26 * 2,
+      //减去顶部章节标题栏和底部标签高度
+      height: document.documentElement.clientHeight - 30 - 25, //底部少算了5px
+    }
+  }
+
   //将章节分割为若干页并显示
   divideChapterToPages(chapter: Chapter) {
     let titleWidth = this.utility.measureText(chapter.title, this.config.fontSize * 1.5,
@@ -414,16 +443,17 @@ export class ReadPage implements OnInit, OnDestroy {
       })
       //第一页
       if (start == 0) {
-        pages.push({ title: chapter.title, lines: pageLines })
+        pages.push({ title: chapter.title, pagination: 1, pageCount: 0, lines: pageLines })
         titleHeight = 0
       }
-      else pages.push({ lines: pageLines })
+      else pages.push({ pagination: pages.length + 1, pageCount: 0, lines: pageLines })
       start = res.next
       if (res.ended)
         break
     }
+    pages.forEach(page => { page.pageCount = pages.length })
     let t = new Date()
-    this.currentTime = t.getHours() + ':' + t.getMinutes()
+    this.currentTime = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0')
     return pages
   }
 
@@ -502,6 +532,7 @@ export class ReadPage implements OnInit, OnDestroy {
       }
       else
         this.config = res.config
+      this.utility.setScreenOrientation(this.config.landscape)
       this.changeFontSize(0)
       this.changeLineHeight(0)
       this.setColor(this.config.background, this.config.foreground, this.config.darkMode)
@@ -521,17 +552,15 @@ export class ReadPage implements OnInit, OnDestroy {
    * @param darkMode 是否夜间模式。如果是，则不记录颜色配置，退出夜间模式时则可恢复原颜色配置
    */
   setColor(background: string, foreground: string = '#000', darkMode = false) {
-    this.style.colorCss.backgroundColor = background
-    this.style.colorCss.color = foreground
     this.style.bodyCss.backgroundColor = background
     this.style.bodyCss.color = foreground
-    this.slide.backStyle.backgroundColor
+    this.slide.backStyle.background
       = this.slide.frontStyle.backgroundColor = background
     this.slide.backStyle.color
       = this.slide.frontStyle.color = foreground
 
     if (!this.menu.show)
-      this.utility.setStatusBarStyle({ dark: darkMode, light: !darkMode, color: background, hide: true })
+      this.utility.setStatusBarStyle({ dark: darkMode, hide: true })
     //如果是夜间模式则不改变配置项
     if (!darkMode)
       this.putConfig({ background: background, foreground: foreground, darkMode: darkMode })
@@ -543,19 +572,12 @@ export class ReadPage implements OnInit, OnDestroy {
   changeFontSize(delta: number = 1) {
     if (this.config.fontSize <= 12 && delta < 0)
       return
-    this.config.fontSize += delta
-    this.putConfig({})
+    this.config.fontSize += Number(delta)
+    if (delta)
+      this.putConfig({})
     this.style.bodyCss.fontSize = this.config.fontSize + "px"
     this.slide.backStyle.fontSize = this.slide.frontStyle.fontSize = this.style.bodyCss.fontSize;
-    this.slide.containerPadding = (document.documentElement.clientWidth % this.utility.measureText(
-      '国', this.config.fontSize, getComputedStyle(document.documentElement).fontFamily)) / 2
-    while (this.slide.containerPadding < 20)
-      this.slide.containerPadding += this.config.fontSize / 2
-    this.slide.frontStyle.padding
-      = this.slide.backStyle.padding
-      = '0 ' + this.slide.containerPadding + 'px'
     this.reloadChapterPages()
-    this.slide.textArea.width = document.documentElement.clientWidth - 2 * this.slide.containerPadding
   }
   //改变行距
   changeLineHeight(delta: number = 0.1) {
@@ -567,15 +589,25 @@ export class ReadPage implements OnInit, OnDestroy {
       = this.config.lineSpace.toFixed(1) + "em"
     this.reloadChapterPages()
   }
+  //切换横屏模式
+  async switchOrientation() {
+    this.config.landscape = !this.config.landscape
+    await this.utility.setScreenOrientation(this.config.landscape)
+    this.putConfig()
+    this.slide.textArea = this.getTextArea()
+    this.reloadChapterPages()
+  }
   //切换翻页方式
   switchSlideMode() {
     this.config.slideMode = !this.config.slideMode
-    this.putConfig(null)
+    this.putConfig()
     if (this.config.slideMode)
       this.reloadChapterPages(0)
   }
   //切换夜间模式
   switchDarkMode() {
+    console.log(screen.height)
+    console.log(document.documentElement.clientHeight)
     if (this.config.darkMode)
       this.setColor(this.config.background, this.config.foreground, false)
     else
@@ -610,7 +642,6 @@ export class ReadPage implements OnInit, OnDestroy {
 
   //手指移动
   onTouchMove(event) {
-    console.log('move', event)
     //隐藏呼出菜单
     if (this.menu.show)
       this.menu.show = false
@@ -638,20 +669,12 @@ export class ReadPage implements OnInit, OnDestroy {
       this.toNextChapter()
   }
 
-  //滚动事件，记录位置
-  onScroll(event) {
-    console.log(event)
-    if (this.config.slideMode) return
-    this.shelfBook.readProgress = event.detail.currentY
-  }
-
   //点击屏幕中央呼出菜单
   onTap(e) {
     if (this.menu.show) {
       this.utility.setStatusBarStyle({
         dark: this.config.darkMode,
         light: !this.config.darkMode,
-        color: this.style.colorCss.backgroundColor,
         hide: true
       })
       this.menu.show = false
@@ -669,7 +692,7 @@ export class ReadPage implements OnInit, OnDestroy {
         return
       }
     }
-    this.utility.setStatusBarStyle({ dark: true, color: "#222428",  hide: false })
+    this.utility.setStatusBarStyle({ dark: true, hide: false })
     this.menu.expand = false
     this.menu.show = true
   }
@@ -677,8 +700,10 @@ export class ReadPage implements OnInit, OnDestroy {
   //滑动开始
   onSlideStart(event) {
     if (!this.config.slideMode) return
+    if (event.targetTouches.length > 1)
+      return
     let t = new Date()
-    this.currentTime = t.getHours() + ':' + t.getMinutes()
+    this.currentTime = t.getHours().toString().padStart(2, '0') + ':' + t.getMinutes().toString().padStart(2, '0')
     if (this.slideGesture.state == SlidingState.ending)
       this.endSlide()
     if (this.slideGesture.state != SlidingState.unstarted)
@@ -697,13 +722,15 @@ export class ReadPage implements OnInit, OnDestroy {
     if (event && event.targetTouches.length > 1) return
     this.slideGesture.state = SlidingState.ending
     //反向行程较大，滑动方向反转（撤销翻页）
-    if (this.slideGesture.reversedDistance > 20)
+    this.slideGesture.canceled = this.slideGesture.reversedDistance > 20
+    if (this.slideGesture.canceled) {
       this.slideGesture.direction = this.slideGesture.direction == 'next' ? 'previous' : 'next'
+    }
     clearInterval(this.slideGesture.timer)
     let dest = 0
     if (this.slideGesture.direction == 'next')
       dest = -(document.documentElement.clientWidth + 10)
-    let step = (dest - this.slideGesture.curPosition) / 10
+    let step = (dest - this.slideGesture.curPosition) / 7
     //继续滑动
     this.slideGesture.timer = setInterval((step: number, dest: number) => {
       this.slideGesture.curPosition += step
@@ -715,16 +742,32 @@ export class ReadPage implements OnInit, OnDestroy {
       this.endSlide()
       //更新阅读进度。之所以不放在endSlide()里，是为了防止连续的点击翻页（此时会在手指按下时调用endSlide()，只会更新内存）
       this.putShelfBook(undefined, true)
-    }, 15, step, dest)
+    }, 20, step, dest)
   }
   //结束当前滑动动画
   endSlide() {
     clearInterval(this.slideGesture.timer)
     this.slide.frontStyle.left = 0
-    if (this.slideGesture.direction == 'next')
-      this.slide.frontIndex = this.slide.backIndex
-    else
-      this.slide.backIndex = this.slide.frontIndex
+    this.slide.frontIndex = this.slide.backIndex
+      = (this.slideGesture.direction == 'next' ? this.slide.backIndex : this.slide.frontIndex)
+    //已取消翻页
+    if (this.slideGesture.canceled) {
+      //在切换章节时取消翻页，且章节切换已完成
+      if (this.slideGesture.canceled && this.slide.frontIndex == -1) {
+        if (this.slideGesture.direction == 'next') {
+          this.toNextChapter()
+          this.slide.frontIndex = 0
+        }
+        else
+          this.toLastChapter(true)
+      }
+      //切换到上一章时取消翻页，且章节切换未完成
+      else if (this.slide.frontIndex == 0 && this.slideGesture.direction == 'next')
+        this.chapterControl.current = undefined
+      //切换到下一章时取消翻页，且章节切换未完成
+      else if (this.slide.frontIndex == this.slide.chapterPages.length - 1 && this.slideGesture.direction == 'previous')
+        this.chapterControl.current = undefined
+    }
     this.shelfBook.readProgress = this.slide.frontIndex / this.slide.chapterPages.length
     this.slideGesture.state = SlidingState.unstarted
   }
@@ -744,9 +787,9 @@ export class ReadPage implements OnInit, OnDestroy {
     else if (this.slideGesture.state == SlidingState.sliding) {
       let span = this.slideGesture.curPosition
       this.slideGesture.curPosition = event.targetTouches[0].pageX - this.slideGesture.beginPos
-      span = this.slideGesture.curPosition - span
       if (this.slideGesture.direction == 'previous')
         this.slideGesture.curPosition -= document.documentElement.clientWidth
+      span = this.slideGesture.curPosition - span
       //记录反向行程
       if ((this.slideGesture.direction == 'next' && span < 0)
         || (this.slideGesture.direction == 'previous' && span > 0)) {
@@ -771,13 +814,14 @@ export class ReadPage implements OnInit, OnDestroy {
       this.slideGesture.direction = 'previous'
     else
       this.slideGesture.direction = 'next'
-    //等待切换章节
-    if (!this.slide.chapterPages[this.slide.frontIndex]) {
-      this.slideGesture.state = SlidingState.unstarted
-      return
-    }
     if (this.slide.backIndex != this.slide.frontIndex)
       this.slide.backIndex = this.slide.frontIndex
+    //正在切换章节
+    if (!this.slide.chapterPages[this.slide.frontIndex]) {
+      // this.slideGesture.state = SlidingState.unstarted
+      // return
+      this.chapterControl.current = undefined
+    }
     //滑动
     if (this.slideGesture.direction == 'previous') {
       //上一章不可用
@@ -785,7 +829,8 @@ export class ReadPage implements OnInit, OnDestroy {
         this.slideGesture.state = SlidingState.unstarted
         return
       }
-      --this.slide.frontIndex
+      if (this.slide.frontIndex >= 0)
+        --this.slide.frontIndex
       this.slideGesture.curPosition = -document.documentElement.clientWidth
       this.slide.frontStyle.left = this.slideGesture.curPosition + 'px'
       if (this.slide.frontIndex == -1)
@@ -800,7 +845,7 @@ export class ReadPage implements OnInit, OnDestroy {
         return
       }
       this.slideGesture.curPosition = 0
-      if (this.slide.frontIndex == this.slide.chapterPages.length - 1) {
+      if (this.slide.frontIndex == this.slide.chapterPages.length - 1 || this.slide.frontIndex < 0) {
         this.slide.backIndex = -1
         this.toNextChapter()
       }
@@ -824,12 +869,4 @@ export class ReadPage implements OnInit, OnDestroy {
   goBack() {
     this.location.back()
   }
-}
-
-//滑动状态
-enum SlidingState {
-  unstarted,  //未开始
-  ready,      //准备滑动
-  sliding,    //控制滑动中
-  ending      //自动滑动中
 }

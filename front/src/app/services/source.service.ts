@@ -437,7 +437,7 @@ export class SourceService {
     this.remoteService.detail(bid).toPromise()
       .then((res: DetaiResult) => {
         this.cacheService.putBook(res.book)
-        this.localService.setBookDetail(res.book, RemoteSource.qidian)
+        this.localService.putBookDetail(res.book, RemoteSource.qidian)
         this.handleResult(res)
         callback(res)
       })
@@ -466,7 +466,7 @@ export class SourceService {
     }
     this.remoteService.catalog(bid).toPromise()
       .then((res: CatalogResult) => {
-        this.localService.setCatalog(res.catalog, RemoteSource.qidian)
+        this.localService.putCatalog(res.catalog, RemoteSource.qidian)
         this.handleResult(res)
         callback(res)
       })
@@ -512,7 +512,7 @@ export class SourceService {
     this.remoteService.chapter(bid, cid).toPromise()
       .then((res: ChapterResult) => {
         this.cacheService.putChapter(res.chapter)
-        this.localService.setChapter(res.chapter, RemoteSource.qidian)
+        this.localService.putChapter(res.chapter, RemoteSource.qidian)
         this.handleResult(res)
         callback(res)
       })
@@ -559,7 +559,7 @@ export class SourceService {
     }
     else if (res.token) {
       this.cacheService.putToken(res.token)
-      this.localService.setToken(res.token)
+      this.localService.putToken(res.token)
       this.remoteService.setToken(res.token)
     }
     return true

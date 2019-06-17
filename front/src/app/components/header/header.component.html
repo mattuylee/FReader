@@ -1,9 +1,11 @@
-<ion-header>
+<div *ngIf="noNavBar" class="header-block" [style.background]="fillColor"></div>
+
+<ion-header *ngIf="!noNavBar">
+  <div class="header-block" [style.background]="fillColor"></div>
   <ion-toolbar color="dark">
-      <div class="header-block"></div>
     <ion-item color="dark">
       <ion-icon *ngIf="backEntry" (click)="goBack()" name="arrow-back" color="light" size="large" mode="ios"></ion-icon>
-      <ion-title>{{title}}</ion-title>
+      <ion-title class="title">{{title}}</ion-title>
       <a *ngIf="searchEntry" (click)="toSearchPage()">
         <ion-icon color="light" name="search" size="large" mode="md" position="end"></ion-icon>
       </a>

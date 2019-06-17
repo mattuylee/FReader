@@ -62,7 +62,7 @@ export class LocalService {
     //user-data
 
     getToken(): Promise<string> { return this.storage.get('token') }
-    async setToken(token: string) {
+    async putToken(token: string) {
         if (token) await this.storage.set('token', token)
     }
     private async clearToken() { await this.storage.remove('token') }
@@ -149,7 +149,7 @@ export class LocalService {
     }
 
     //书籍信息
-    async setBookDetail(book: Book, source: RemoteSource) {
+    async putBookDetail(book: Book, source: RemoteSource) {
         if (!book) return
         await this.storage.set(this.strings.getLocalStorageKey({
             dataType: 'book',
@@ -166,7 +166,7 @@ export class LocalService {
     }
 
     //目录
-    async setCatalog(catalog: Catalog, source: RemoteSource) {
+    async putCatalog(catalog: Catalog, source: RemoteSource) {
         if (!catalog) return
         return await this.storage.set(this.strings.getLocalStorageKey({
             dataType: 'catalog',
@@ -183,19 +183,20 @@ export class LocalService {
     }
 
     //章节
-    async setChapter(chapter: Chapter, source: RemoteSource) {
+    async putChapter(chapter: Chapter, source: RemoteSource) {
         if (!chapter) return
-        return await this.storage.get(this.strings.getLocalStorageKey({
+        return await this.storage.set(this.strings.getLocalStorageKey({
             dataType: 'chapter',
             source: source,
             name: chapter.cid
-        }))
+        }), chapter)
     }
     async getChapter(cid: string, source: RemoteSource = null): Promise<Chapter> {
-        return await this.storage.get(this.strings.getLocalStorageKey({
+        let chapter = await this.storage.get(this.strings.getLocalStorageKey({
             dataType: 'chapter',
             source: source,
             name: cid
         })) as Chapter
+        return chapter
     }
 }

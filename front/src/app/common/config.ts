@@ -5,6 +5,7 @@ export class UserConfig {
     background: string  //背景色十六进制格式
     foreground: string  //前景色十六进制格式
     slideMode: boolean  //是否为覆盖翻页模式
+    landscape: boolean  //是否横屏模式
 
     static readonly defaultConfig = {
         darkMode: false,
@@ -12,7 +13,8 @@ export class UserConfig {
         lineSpace: 1.5,
         background: "#f2f2f2",
         foreground: "#000",
-        slideMode: false
+        slideMode: false,
+        landscape: false
     }
     static getDefault(): UserConfig {
         return this.defaultConfig

@@ -27,7 +27,7 @@
   </ion-item>
   <div class="item-buttons">
     <ion-button class="item-button-add-sheet" color="{{shelf.canAddToShelf ? 'primary' : 'medium'}}" (click)="addToShelf()">
-      {{shelf.canAddToShelf ? '加入书架' : '&#10004;已在书架'}}
+      <span style="z-index: 1">{{shelf.canAddToShelf ? '加入书架' : '&#10004;已在书架'}}</span>
     </ion-button>
     <ion-button class="item-button-read-now" color="danger" (click)="readNow()">
       立即阅读

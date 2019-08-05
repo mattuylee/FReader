@@ -15,5 +15,6 @@ namespace Freader.Models.Entity
         public string Background;
         public string Foreground;
         public bool SlideMode;
+        public bool Landscape;
     }
 }
